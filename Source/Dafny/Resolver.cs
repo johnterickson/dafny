@@ -11099,6 +11099,19 @@ namespace Microsoft.Dafny
             for (int ii = 0; ii < rr.ArrayDimensions.Count; ii++) {
               args.Add(Type.Int);
             }
+
+            var givenArrowType = rr.ElementInit.Type.AsArrowType;
+            if (givenArrowType != null && givenArrowType.Args.Count == rr.ArrayDimensions.Count) {
+              for (int ii = 0; ii < rr.ArrayDimensions.Count; ii++) {
+                Type givenArgType = givenArrowType.Args[ii];
+                if (!givenArgType.IsNumericBased(Type.NumericPersuation.Int)) {
+                  ConstrainSubtypeRelation(Type.Int, givenArgType, rr.ElementInit, 
+                    "array-allocation initialization expression expected to have argument type '{0}' (instead got'{1}')",
+                    Type.Int, givenArgType);
+                }
+                args[ii] = givenArgType;
+              }
+            }
             var arrowType = new ArrowType(rr.ElementInit.tok, builtIns.ArrowTypeDecls[rr.ArrayDimensions.Count], args, rr.EType);
             string underscores;
             if (rr.ArrayDimensions.Count == 1) {

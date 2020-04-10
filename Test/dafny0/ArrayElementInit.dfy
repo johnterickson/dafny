@@ -41,6 +41,15 @@ method M5(d: char)
   assert a[18] == d;
 }
 
+newtype {:nativeType "int"} Index = x:int | -100 <= x < 100
+
+method M6(d: int)
+{
+  var a := new int[10]((x:Index) => d);
+  assert a.Length == 10;
+  assert a[9] == d;
+}
+
 method P0(d: char)
 {
   var a := new char[25,10,100]((_,_,_) => d);

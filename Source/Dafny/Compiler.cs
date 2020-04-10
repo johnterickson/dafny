@@ -2914,6 +2914,14 @@ namespace Microsoft.Dafny {
             TrCallStmt(tRhs.InitCall, nw, wStmts);
           }
         } else if (tRhs.ElementInit != null) {
+          string nativeCast = string.Empty;
+          var givenArrowType = tRhs.ElementInit.Type.AsArrowType;
+          var argNativeType = AsNativeType(givenArrowType.Args.First()); // TODO check all
+          if (argNativeType != null) {
+            GetNativeInfo(argNativeType.Sel, out string nativeName, out string _, out bool __);
+            nativeCast = $"({nativeName})";
+          }
+
           // Compute the array-initializing function once and for all (as required by the language definition)
           string f = idGenerator.FreshId("_arrayinit");
           DeclareLocalVar(f, null, null, tRhs.ElementInit, false, wStmts, tRhs.ElementInit.Type);
@@ -2922,11 +2930,12 @@ namespace Microsoft.Dafny {
           var w = wStmts;
           for (var d = 0; d < tRhs.ArrayDimensions.Count; d++) {
             string len, pre, post;
-            GetSpecialFieldInfo(SpecialField.ID.ArrayLength, tRhs.ArrayDimensions.Count == 1 ? null : (object)d, out len, out pre, out post);
+            GetSpecialFieldInfo(SpecialField.ID.ArrayLengthInt, 
+              tRhs.ArrayDimensions.Count == 1 ? null : (object)d, out len, out pre, out post);
             var bound = string.Format("{0}{1}{2}{3}", pre, nw, len == "" ? "" : "." + len, post);
             w = CreateForLoop(indices[d], bound, w);
           }
-          var eltRhs = string.Format("{0}{2}({1})", f, Util.Comma(indices, ArrayIndexToInt), LambdaExecute);
+          var eltRhs = string.Format("{0}{2}({1})", f, Util.Comma(indices, ii => $"{nativeCast}{ArrayIndexToInt(ii)}"), LambdaExecute);
           var wArray = EmitArrayUpdate(indices, eltRhs, tRhs.EType, w);
           wArray.Write(nw);
           EndStmt(w);
