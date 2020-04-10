@@ -2914,29 +2914,33 @@ namespace Microsoft.Dafny {
             TrCallStmt(tRhs.InitCall, nw, wStmts);
           }
         } else if (tRhs.ElementInit != null) {
-          string nativeCast = string.Empty;
+          string[] nativeCasts = new string[tRhs.ArrayDimensions.Count];
           var givenArrowType = tRhs.ElementInit.Type.AsArrowType;
-          var argNativeType = AsNativeType(givenArrowType.Args.First()); // TODO check all
-          if (argNativeType != null) {
-            GetNativeInfo(argNativeType.Sel, out string nativeName, out string _, out bool __);
-            nativeCast = $"({nativeName})";
+          if (givenArrowType != null) {
+            for (var d = 0; d < tRhs.ArrayDimensions.Count; d++) {
+              var argNativeType = AsNativeType(givenArrowType.Args[d]);
+              if (argNativeType != null) {
+                GetNativeInfo(argNativeType.Sel, out string nativeName, out string _, out bool __);
+                nativeCasts[d] = $"({nativeName})";
+              }
+            }
           }
 
           // Compute the array-initializing function once and for all (as required by the language definition)
           string f = idGenerator.FreshId("_arrayinit");
           DeclareLocalVar(f, null, null, tRhs.ElementInit, false, wStmts, tRhs.ElementInit.Type);
           // Build a loop nest that will call the initializer for all indices
-          var indices = Translator.Map(Enumerable.Range(0, tRhs.ArrayDimensions.Count), ii => idGenerator.FreshId("_arrayinit_" + ii));
+          var indices = Translator.Map(Enumerable.Range(0, tRhs.ArrayDimensions.Count), ii => (ii,id: idGenerator.FreshId("_arrayinit_" + ii)));
           var w = wStmts;
           for (var d = 0; d < tRhs.ArrayDimensions.Count; d++) {
             string len, pre, post;
             GetSpecialFieldInfo(SpecialField.ID.ArrayLengthInt, 
               tRhs.ArrayDimensions.Count == 1 ? null : (object)d, out len, out pre, out post);
             var bound = string.Format("{0}{1}{2}{3}", pre, nw, len == "" ? "" : "." + len, post);
-            w = CreateForLoop(indices[d], bound, w);
+            w = CreateForLoop(indices[d].id, bound, w);
           }
-          var eltRhs = string.Format("{0}{2}({1})", f, Util.Comma(indices, ii => $"{nativeCast}{ArrayIndexToInt(ii)}"), LambdaExecute);
-          var wArray = EmitArrayUpdate(indices, eltRhs, tRhs.EType, w);
+          var eltRhs = string.Format("{0}{2}({1})", f, Util.Comma(indices, ii => $"{nativeCasts[ii.ii] ?? string.Empty}{ArrayIndexToInt(ii.id)}"), LambdaExecute);
+          var wArray = EmitArrayUpdate(indices.Select(ii => ii.id).ToList(), eltRhs, tRhs.EType, w);
           wArray.Write(nw);
           EndStmt(w);
         } else if (tRhs.InitDisplay != null) {

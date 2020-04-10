@@ -11106,7 +11106,7 @@ namespace Microsoft.Dafny
                 Type givenArgType = givenArrowType.Args[ii];
                 if (!givenArgType.IsNumericBased(Type.NumericPersuation.Int)) {
                   ConstrainSubtypeRelation(Type.Int, givenArgType, rr.ElementInit, 
-                    "array-allocation initialization expression expected to have argument type '{0}' (instead got'{1}')",
+                    "array-allocation initialization expression expected to have argument type '{0}' (instead got '{1}')",
                     Type.Int, givenArgType);
                 }
                 args[ii] = givenArgType;

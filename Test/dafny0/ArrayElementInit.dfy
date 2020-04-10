@@ -50,6 +50,11 @@ method M6(d: int)
   assert a[9] == d;
 }
 
+method M7(d: int)
+{
+  var a := new int[10]((x:string) => d); // Error: array-allocation initialization expression expected to have argument type 'int' (instead got 'string')
+}
+
 method P0(d: char)
 {
   var a := new char[25,10,100]((_,_,_) => d);
