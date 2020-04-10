@@ -146,8 +146,10 @@ method Display(n: nat)
   var d := new char[0][];
   var s := new string[4]["looks", "like", "this", "rocks"];
   var i := new int32[7][-2, -1, 0, 1, 2, 3, 4];
+  var n := new int32[5]((i: int32) => i);
   PrintArray(b);
   PrintArray(d);
   PrintArray(s);
   PrintArray(i);
+  PrintArray(n);
 }
